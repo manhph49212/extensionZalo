@@ -1,0 +1,40 @@
+{
+  "manifest_version": 3,
+  "name": "Zalo AI Reader & Summarizer - Đọc & Tóm Tắt Tin Nhắn Zalo",
+  "version": "1.0.0",
+  "description": "Đọc tin nhắn nhóm Zalo theo yêu cầu khi người dùng bấm Đọc, hỗ trợ prompt tóm tắt, trích xuất việc cần làm và phân tích AI.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    },
+    "default_title": "Zalo AI Summarizer"
+  },
+  "permissions": [
+    "storage",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "https://chat.zalo.me/*",
+    "https://generativelanguage.googleapis.com/*",
+    "https://api.openai.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://chat.zalo.me/*"],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}

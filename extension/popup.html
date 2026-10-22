@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Zalo AI Reader</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <div class="popup-header">
+      <div class="logo-area">
+        <img src="icons/icon48.png" alt="Logo" class="logo">
+        <div>
+          <h2>Zalo AI Reader</h2>
+          <span class="version">v1.0.0 • Manifest V3</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="popup-body">
+      <!-- Status Card -->
+      <div class="status-card">
+        <span class="status-indicator"></span>
+        <span id="site-status">Mở Zalo Web để bắt đầu sử dụng</span>
+      </div>
+
+      <!-- Quick Action: Open Zalo Web -->
+      <button id="btn-open-zalo" class="btn-primary">
+        🚀 Mở Zalo Web (chat.zalo.me)
+      </button>
+
+      <!-- API Key Setup -->
+      <div class="card">
+        <div class="card-title">🔑 Cấu hình Google Gemini API Key</div>
+        <p class="card-desc">Sử dụng hoàn toàn miễn phí, phản hồi tiếng Việt siêu nhanh.</p>
+        <div class="input-group">
+          <input type="password" id="popup-gemini-key" placeholder="Dán Gemini API Key vào đây...">
+          <button id="btn-toggle-key" class="btn-icon" title="Hiện/Ẩn">👁️</button>
+        </div>
+        <div class="help-row">
+          <a href="https://aistudio.google.com/app/apikey" target="_blank" class="link-highlight">
+            👉 Bấm vào đây lấy Key miễn phí trong 1 phút
+          </a>
+        </div>
+        <button id="btn-save-key" class="btn-secondary">
+          💾 Lưu API Key
+        </button>
+        <div id="save-status" class="save-status"></div>
+      </div>
+
+      <!-- Guide Steps -->
+      <div class="card">
+        <div class="card-title">📖 Hướng dẫn sử dụng:</div>
+        <ol class="steps-list">
+          <li>Vào <strong>chat.zalo.me</strong> và bấm chọn một nhóm chat bạn muốn đọc.</li>
+          <li>Bấm vào nút tròn <strong>"AI Đọc Tin"</strong> ở góc dưới bên phải màn hình.</li>
+          <li>Bấm <strong>"Đọc tin nhắn nhóm này"</strong> (chỉ đọc khi bạn ấn đọc).</li>
+          <li>Nhập yêu cầu (ví dụ: <em>Tóm tắt nội dung</em>) rồi bấm <strong>"Gửi AI Xử Lý"</strong>.</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="popup-footer">
+      <span>Bảo mật 100% • Không lưu trữ tin nhắn</span>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

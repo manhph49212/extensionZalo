@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zalo AI Reader & Summarizer | Trợ lý Đọc & Tóm Tắt Tin Nhắn Zalo</title>
+  <meta name="description" content="Công cụ đọc tin nhắn nhóm Zalo theo yêu cầu bằng AI. Tự động đọc và tóm tắt nội dung, lọc việc cần làm (to-do list), trích xuất thông tin quan trọng.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #0068ff;
+      --primary-gradient: linear-gradient(135deg, #0068ff 0%, #7928ca 100%);
+      --accent: #10b981;
+      --bg: #090d16;
+      --surface: #111827;
+      --surface-card: rgba(23, 32, 51, 0.75);
+      --border: rgba(255, 255, 255, 0.08);
+      --border-focus: rgba(0, 104, 255, 0.4);
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --radius-xl: 20px;
+      --radius-lg: 14px;
+      --radius-md: 10px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+      background-image: 
+        radial-gradient(circle at 15% 15%, rgba(0, 104, 255, 0.12) 0%, transparent 40%),
+        radial-gradient(circle at 85% 30%, rgba(121, 40, 202, 0.12) 0%, transparent 45%),
+        radial-gradient(circle at 50% 85%, rgba(16, 185, 129, 0.08) 0%, transparent 50%);
+      background-attachment: fixed;
+    }
+
+    /* Container */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* Header Nav */
+    header {
+      padding: 24px 0;
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(16px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(9, 13, 22, 0.85);
+    }
+
+    .nav-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: #fff;
+    }
+
+    .brand-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: var(--primary-gradient);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 20px rgba(0, 104, 255, 0.35);
+    }
+
+    .brand-icon svg {
+      width: 24px;
+      height: 24px;
+      fill: #fff;
+    }
+
+    .brand-title {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+    }
+
+    .brand-badge {
+      font-size: 10.5px;
+      background: rgba(0, 104, 255, 0.2);
+      border: 1px solid rgba(0, 104, 255, 0.4);
+      color: #60a5fa;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-weight: 600;
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    /* Hero Section */
+    .hero {
+      padding: 70px 0 50px 0;
+      text-align: center;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      font-size: 13px;
+      font-weight: 600;
+      color: #93c5fd;
+      margin-bottom: 24px;
+    }
+
+    .hero-badge span.dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 10px var(--accent);
+    }
+
+    .hero h1 {
+      font-size: clamp(34px, 5.5vw, 56px);
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -1px;
+      margin-bottom: 20px;
+    }
+
+    .hero h1 span.gradient {
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero p {
+      font-size: 18px;
+      color: var(--text-muted);
+      max-width: 720px;
+      margin: 0 auto 36px auto;
+      line-height: 1.6;
+    }
+
+    .hero-buttons {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      border-radius: var(--radius-md);
+      font-size: 14.5px;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .btn-primary {
+      background: var(--primary-gradient);
+      color: #fff;
+      box-shadow: 0 6px 20px rgba(0, 104, 255, 0.35);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 28px rgba(0, 104, 255, 0.45);
+    }
+
+    .btn-outline {
+      background: rgba(255, 255, 255, 0.05);
+      color: #fff;
+      border: 1px solid var(--border);
+    }
+
+    .btn-outline:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
+      transform: translateY(-2px);
+    }
+
+    /* Grid Sections */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      margin: 48px 0;
+    }
+
+    @media (max-width: 900px) {
+      .grid-2 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Card Panels */
+    .glass-card {
+      background: var(--surface-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 28px;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .glass-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+    }
+
+    .card-heading {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card-subheading {
+      font-size: 13.5px;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+
+    /* Stepper */
+    .install-step {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+
+    .step-number {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: rgba(0, 104, 255, 0.15);
+      border: 1px solid rgba(0, 104, 255, 0.4);
+      color: #60a5fa;
+      font-weight: 700;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .step-content h3 {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      color: #fff;
+    }
+
+    .step-content p {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .code-box {
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 10px 14px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: #38bdf8;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      word-break: break-all;
+    }
+
+    .copy-btn-code {
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: #fff;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      cursor: pointer;
+      margin-left: 8px;
+      white-space: nowrap;
+    }
+
+    .copy-btn-code:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Interactive Playground */
+    .playground-box {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .chat-mockup {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      max-height: 220px;
+      overflow-y: auto;
+      font-size: 12.5px;
+    }
+
+    .mockup-item {
+      margin-bottom: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .mockup-item:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .mockup-sender {
+      font-weight: 700;
+      color: #38bdf8;
+    }
+
+    .mockup-time {
+      font-size: 10.5px;
+      color: #64748b;
+      margin-left: 6px;
+    }
+
+    .mockup-text {
+      color: #cbd5e1;
+      margin-top: 3px;
+    }
+
+    .prompt-input-area {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .playground-textarea {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      color: #fff;
+      font-family: inherit;
+      font-size: 13.5px;
+      outline: none;
+      resize: vertical;
+      min-height: 60px;
+      transition: border-color 0.2s;
+    }
+
+    .playground-textarea:focus {
+      border-color: var(--primary);
+    }
+
+    .chips-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .interactive-chip {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border);
+      color: #cbd5e1;
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .interactive-chip:hover {
+      background: rgba(0, 104, 255, 0.2);
+      border-color: rgba(0, 104, 255, 0.5);
+      color: #fff;
+    }
+
+    .api-key-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .api-key-input {
+      flex: 1;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 8px 12px;
+      color: #fff;
+      font-size: 12.5px;
+      outline: none;
+    }
+
+    .result-display {
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      margin-top: 14px;
+      font-size: 13.5px;
+      line-height: 1.6;
+      color: #e2e8f0;
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .result-display.active {
+      display: block;
+    }
+
+    .result-display h2, .result-display h3 {
+      color: #38bdf8;
+      font-size: 15px;
+      margin: 10px 0 6px 0;
+    }
+
+    .result-display ul {
+      margin-left: 20px;
+      margin-bottom: 10px;
+    }
+
+    .result-display strong {
+      color: #fff;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Features Grid */
+    .features-section {
+      padding: 60px 0;
+    }
+
+    .section-title {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .section-title h2 {
+      font-size: 30px;
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+
+    .section-title p {
+      color: var(--text-muted);
+      font-size: 16px;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+    }
+
+    .feature-card {
+      background: var(--surface-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(0, 104, 255, 0.4);
+    }
+
+    .feature-icon {
+      font-size: 28px;
+      margin-bottom: 14px;
+      display: inline-block;
+    }
+
+    .feature-card h3 {
+      font-size: 17px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .feature-card p {
+      font-size: 13.5px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 32px 0;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 13px;
+      margin-top: 60px;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #1e293b;
+      border: 1px solid var(--border);
+      color: #fff;
+      padding: 10px 18px;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+      z-index: 1000;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="container nav-wrapper">
+      <a href="#" class="brand">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24">
+            <path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.38 5.07L2.14 21.3a1 1 0 0 0 1.23 1.23l4.23-1.24A9.95 9.95 0 0 0 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2zm1 14h-2v-2h2v2zm0-4h-2V7h2v5z"/>
+          </svg>
+        </div>
+        <div>
+          <span class="brand-title">Zalo AI Reader</span>
+          <span class="brand-badge">Manifest V3</span>
+        </div>
+      </a>
+      <div class="nav-actions">
+        <a href="#install-guide" class="btn btn-outline" style="padding: 8px 16px; font-size: 13px;">⚙️ Cách Cài Đặt</a>
+        <a href="https://chat.zalo.me" target="_blank" class="btn btn-primary" style="padding: 8px 16px; font-size: 13px;">🚀 Mở Zalo Web</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <main class="container">
+    <section class="hero">
+      <div class="hero-badge">
+        <span class="dot"></span>
+        <span>Chỉ đọc khi người dùng bấm Đọc • 100% Riêng Tư</span>
+      </div>
+      <h1>Đọc & Tóm Tắt Tin Nhắn Nhóm Zalo<br><span class="gradient">Chính Xác Bằng Trợ Lý AI</span></h1>
+      <p>
+        Khi bạn vào bất kỳ nhóm chat Zalo nào và bấm <strong>"Đọc tin nhắn"</strong>, công cụ sẽ quét nội dung và xử lý theo mọi yêu cầu: 
+        tóm tắt cuộc họp, trích xuất việc cần làm (To-Do), lọc số điện thoại/STK, trả lời câu hỏi tự do.
+      </p>
+      <div class="hero-buttons">
+        <a href="#install-guide" class="btn btn-primary">
+          📥 Hướng Dẫn Cài Đặt Vào Trình Duyệt (30 Giây)
+        </a>
+        <a href="#playground" class="btn btn-outline">
+          ✨ Dùng Thử Prompt & AI Ngay Dưới Đây
+        </a>
+      </div>
+    </section>
+
+    <!-- Two-column: Installation Guide & Interactive Live Playground -->
+    <div class="grid-2">
+      <!-- Left Column: Installation Guide -->
+      <div class="glass-card" id="install-guide">
+        <div class="card-heading">
+          <span>🛠️ Hướng dẫn cài đặt Extension</span>
+        </div>
+        <p class="card-subheading">
+          Hoạt động hoàn hảo trên <strong>Google Chrome, Cốc Cốc, Microsoft Edge, Brave</strong>.
+        </p>
+
+        <!-- Steps -->
+        <div class="install-step">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h3>Mở trang Quản lý Tiện ích</h3>
+            <p>Mở tab mới trên trình duyệt và dán đường dẫn tương ứng:</p>
+            <div class="code-box">
+              <span>chrome://extensions/</span>
+              <button class="copy-btn-code" onclick="copyText('chrome://extensions/')">Copy</button>
+            </div>
+            <p style="margin-top: 6px; font-size: 12px; color: #64748b;">(Trên Cốc Cốc: <code>coccoc://extensions/</code> | Trên Edge: <code>edge://extensions/</code>)</p>
+          </div>
+        </div>
+
+        <div class="install-step">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h3>Bật "Chế độ cho nhà phát triển" (Developer Mode)</h3>
+            <p>Gạt công tắc ở góc trên bên phải màn hình trang Extensions sang <strong>Bật (ON)</strong>.</p>
+          </div>
+        </div>
+
+        <div class="install-step">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <h3>Bấm "Tải tiện ích đã giải nén" (Load unpacked)</h3>
+            <p>Bấm nút <strong>"Tải tiện ích đã giải nén"</strong> ở góc trên bên trái, sau đó chọn thư mục:</p>
+            <div class="code-box">
+              <span id="folder-path">c:\laragon\www\doctinnhanazlo\extension</span>
+              <button class="copy-btn-code" onclick="copyText('c:\\laragon\\www\\doctinnhanazlo\\extension')">Copy Đường Dẫn</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="install-step">
+          <div class="step-number">4</div>
+          <div class="step-content">
+            <h3>Vào Zalo Web và Sử Dụng!</h3>
+            <p>Truy cập <strong>chat.zalo.me</strong>, bạn sẽ thấy nút tròn <strong>"AI Đọc Tin"</strong> ở góc dưới bên phải. Chọn nhóm bất kỳ và bấm <strong>"Đọc tin nhắn nhóm này"</strong>.</p>
+          </div>
+        </div>
+
+        <div style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+          <a href="zalo-ai-reader-extension.zip" download class="btn btn-outline" style="font-size: 13px;">
+            📦 Tải file .ZIP đóng gói sẵn
+          </a>
+          <a href="https://aistudio.google.com/app/apikey" target="_blank" class="btn btn-outline" style="font-size: 13px; color: #60a5fa;">
+            🔑 Lấy Google Gemini API Key Miễn Phí
+          </a>
+        </div>
+      </div>
+
+      <!-- Right Column: Interactive Live Playground -->
+      <div class="glass-card" id="playground">
+        <div class="card-heading">
+          <span>🧪 Thử Nghiệm Prompt & Tin Nhắn Mẫu</span>
+        </div>
+        <p class="card-subheading">
+          Trải nghiệm cách AI đọc và trích xuất dữ liệu từ một cuộc trò chuyện nhóm Zalo thực tế:
+        </p>
+
+        <div class="playground-box">
+          <!-- Chat Mockup Preview -->
+          <div class="chat-mockup" id="mockup-chat">
+            <div class="mockup-item">
+              <span class="mockup-sender">Trưởng phòng Nam</span>
+              <span class="mockup-time">09:15</span>
+              <div class="mockup-text">Chào cả nhóm. Dự án website khách hàng yêu cầu xong trước thứ 6 tuần này ngày 25/10. Mọi người cập nhật tiến độ gấp nhé!</div>
+            </div>
+            <div class="mockup-item">
+              <span class="mockup-sender">Hà Designer</span>
+              <span class="mockup-time">09:18</span>
+              <div class="mockup-text">Dạ em đã hoàn thành xong bản vẽ Figma trang thanh toán. Em vừa gửi link qua email của anh Nam rồi ạ.</div>
+            </div>
+            <div class="mockup-item">
+              <span class="mockup-sender">Tuấn Backend</span>
+              <span class="mockup-time">09:22</span>
+              <div class="mockup-text">Phần API tích hợp cổng ZaloPay em đã test xong trên sandbox. Chiều nay em sẽ bàn giao cho bạn Mạnh làm Frontend. Số hotline kỹ thuật đối tác là 0912345678 nếu cần hỗ trợ.</div>
+            </div>
+            <div class="mockup-item">
+              <span class="mockup-sender">Trưởng phòng Nam</span>
+              <span class="mockup-time">09:25</span>
+              <div class="mockup-text">Tốt lắm. Mạnh nhớ ráp giao diện xong trước 17h ngày mai thứ 5 nhé. Chi phí nghiệm thu giai đoạn 1 là 35.000.000đ, bên kế toán sẽ chuyển khoản vào STK Techcombank của công ty.</div>
+            </div>
+          </div>
+
+          <!-- Prompt Selection -->
+          <div class="prompt-input-area">
+            <label style="font-size: 12.5px; font-weight: 600; color: #cbd5e1;">Yêu cầu (Prompt) của bạn:</label>
+            <textarea id="demo-prompt-input" class="playground-textarea" placeholder="Nhập yêu cầu ví dụ: Tóm tắt nội dung, ai cần làm gì...">Tóm tắt nội dung chính của nhóm, ai cần làm gì và thời hạn khi nào?</textarea>
+
+            <div class="chips-row">
+              <button class="interactive-chip" onclick="setDemoPrompt('Tóm tắt ngắn gọn các nội dung chính của cuộc trò chuyện trên.')">📝 Tóm tắt nội dung</button>
+              <button class="interactive-chip" onclick="setDemoPrompt('Liệt kê danh sách công việc (To-Do), người phụ trách và deadline.')">📋 Việc cần làm & Deadline</button>
+              <button class="interactive-chip" onclick="setDemoPrompt('Tìm tất cả số tiền, số điện thoại và thông tin liên lạc trong tin nhắn.')">💰 Lọc Tiền & SĐT</button>
+              <button class="interactive-chip" onclick="setDemoPrompt('Đánh giá tiến độ dự án đang tốt hay gặp trở ngại gì?')">🔍 Đánh giá tiến độ</button>
+            </div>
+          </div>
+
+          <!-- API Key Option (Optional) -->
+          <div class="api-key-row">
+            <input type="password" id="demo-gemini-key" class="api-key-input" placeholder="Dán Gemini Key của bạn (nếu có, hoặc để trống để xem phản hồi demo tức thì)...">
+            <button class="btn btn-primary" id="btn-run-demo" onclick="runDemoPrompt()" style="padding: 8px 16px; font-size: 13px; white-space: nowrap;">
+              ✨ Chạy Thử AI
+            </button>
+          </div>
+
+          <!-- Demo Output Result -->
+          <div id="demo-result" class="result-display">
+            <!-- Rendered result will appear here -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Core Features Section -->
+    <section class="features-section">
+      <div class="section-title">
+        <h2>Tính Năng Vượt Trội</h2>
+        <p>Được thiết kế chuyên biệt cho người dùng Zalo cá nhân, chủ shop, quản lý đội nhóm</p>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">🛡️</div>
+          <h3>100% Theo Nhu Cầu & Riêng Tư</h3>
+          <p>Tool chỉ quét tin nhắn của đúng nhóm bạn đang mở khi bạn chủ động ấn nút "Đọc tin nhắn". Không chạy ngầm, không tự ý thu thập dữ liệu cá nhân.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🎯</div>
+          <h3>Prompt Linh Hoạt Bất Kỳ</h3>
+          <p>Nhập bất kỳ câu hỏi nào: từ "Tóm tắt cuộc họp 3 câu", "Liệt kê ai nợ tiền", "Tìm xem ai chốt đơn sản phẩm A", AI sẽ phân tích chính xác theo tin nhắn thực tế.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">📜</div>
+          <h3>Hỗ Trợ Cuộn Tải Lịch Sử</h3>
+          <p>Tùy chọn đọc tin hiển thị hoặc tự động cuộn lên tải 50, 100, 200 tin nhắn gần nhất để bao quát toàn bộ diễn biến thảo luận trong ngày.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">⚡</div>
+          <h3>Tích Hợp Google Gemini Miễn Phí</h3>
+          <p>Sử dụng mô hình Gemini 2.5 Flash / 1.5 Flash cực kỳ thông minh, đọc hiểu tiếng Việt xuất sắc, miễn phí hạn mức rộng rãi từ Google AI Studio.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">📋</div>
+          <h3>Xuất Báo Cáo & Sao Chép 1-Click</h3>
+          <p>Định dạng kết quả rõ ràng với tiêu đề, gạch đầu dòng, tên người in đậm. Hỗ trợ nút Copy ngay vào clipboard hoặc tải file báo cáo .txt về máy.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🧩</div>
+          <h3>Widget Nổi Tiện Lợi Trên Zalo</h3>
+          <p>Nút nổi tinh tế nằm gọn ở góc màn hình Zalo Web, có thể thu nhỏ hoặc mở rộng chỉ với 1 click mà không làm che mất giao diện chat chính.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <p>Zalo AI Reader &copy; 2026 • Giải pháp đọc & tóm tắt tin nhắn nhóm thông minh.</p>
+      <p style="margin-top: 6px; font-size: 11.5px; opacity: 0.7;">
+        Thư mục extension: <code>c:\laragon\www\doctinnhanazlo\extension</code>
+      </p>
+    </div>
+  </footer>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    function copyText(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        showToast('📋 Đã sao chép vào clipboard: ' + text);
+      }).catch(() => {
+        showToast('Không thể sao chép tự động.');
+      });
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.innerText = msg;
+      toast.style.display = 'block';
+      setTimeout(() => {
+        toast.style.display = 'none';
+      }, 3000);
+    }
+
+    function setDemoPrompt(p) {
+      document.getElementById('demo-prompt-input').value = p;
+    }
+
+    async function runDemoPrompt() {
+      const prompt = document.getElementById('demo-prompt-input').value.trim();
+      const apiKey = document.getElementById('demo-gemini-key').value.trim();
+      const resultBox = document.getElementById('demo-result');
+      const btn = document.getElementById('btn-run-demo');
+
+      if (!prompt) {
+        showToast('Vui lòng nhập prompt yêu cầu.');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerText = '⏳ Đang xử lý...';
+      resultBox.className = 'result-display active';
+      resultBox.innerHTML = '<div style="color:#60a5fa;">🤖 Đang phân tích tin nhắn cuộc trò chuyện...</div>';
+
+      // Sample chat transcript
+      const sampleMessages = `[09:15] Trưởng phòng Nam: Chào cả nhóm. Dự án website khách hàng yêu cầu xong trước thứ 6 tuần này ngày 25/10. Mọi người cập nhật tiến độ gấp nhé!
+[09:18] Hà Designer: Dạ em đã hoàn thành xong bản vẽ Figma trang thanh toán. Em vừa gửi link qua email của anh Nam rồi ạ.
+[09:22] Tuấn Backend: Phần API tích hợp cổng ZaloPay em đã test xong trên sandbox. Chiều nay em sẽ bàn giao cho bạn Mạnh làm Frontend. Số hotline kỹ thuật đối tác là 0912345678 nếu cần hỗ trợ.
+[09:25] Trưởng phòng Nam: Tốt lắm. Mạnh nhớ ráp giao diện xong trước 17h ngày mai thứ 5 nhé. Chi phí nghiệm thu giai đoạn 1 là 35.000.000đ, bên kế toán sẽ chuyển khoản vào STK Techcombank của công ty.`;
+
+      if (apiKey) {
+        // Call real Gemini API
+        try {
+          const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{
+                parts: [{
+                  text: `Bạn là trợ lý AI chuyên nghiệp phân tích tin nhắn Zalo. Hãy đọc đoạn tin nhắn sau:\n${sampleMessages}\n\nVà trả lời yêu cầu sau bằng Tiếng Việt với Markdown đẹp mắt:\n${prompt}`
+                }]
+              }]
+            })
+          });
+
+          const data = await res.json();
+          if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
+            resultBox.innerHTML = renderMarkdown(data.candidates[0].content.parts[0].text);
+            showToast('✨ Phân tích thành công bằng Gemini API trực tiếp!');
+          } else {
+            throw new Error(data.error?.message || 'Không có kết quả');
+          }
+        } catch (err) {
+          resultBox.innerHTML = `<span style="color:#ef4444;">Lỗi gọi API: ${err.message}. Chuyển sang mô phỏng demo.</span>`;
+          setTimeout(() => showMockResult(prompt), 1500);
+        }
+      } else {
+        // Instant simulated smart response demonstrating the feature
+        setTimeout(() => {
+          showMockResult(prompt);
+        }, 600);
+      }
+
+      btn.disabled = false;
+      btn.innerText = '✨ Chạy Thử AI';
+    }
+
+    function showMockResult(prompt) {
+      const resultBox = document.getElementById('demo-result');
+      let responseMd = '';
+
+      if (prompt.includes('Tóm tắt') || prompt.includes('tóm tắt')) {
+        responseMd = `### 📌 Tóm Tắt Cuộc Thảo Luận Nhóm
+Cuộc họp trao đổi về **tiến độ dự án website khách hàng** với hạn chót hoàn thành là **thứ Sáu, ngày 25/10**.
+
+**Các điểm chính:**
+- **Thiết kế:** Bản vẽ Figma trang thanh toán đã xong và gửi cho Trưởng phòng Nam duyệt.
+- **Backend:** Đã test thành công API ZaloPay, sẵn sàng bàn giao cho Frontend trong chiều nay.
+- **Frontend:** Cần hoàn thành ráp giao diện trước **17h ngày mai (thứ Năm)**.
+- **Tài chính:** Nghiệm thu giai đoạn 1 trị giá **35.000.000 VNĐ** sẽ được chuyển vào tài khoản Techcombank.`;
+      } else if (prompt.includes('Việc') || prompt.includes('việc') || prompt.includes('Deadline') || prompt.includes('deadline')) {
+        responseMd = `### 📋 Danh Sách Công Việc & Deadline Cần Làm
+1. **Hà Designer:**
+   - *Công việc:* Thiết kế Figma trang thanh toán.
+   - *Trạng thái:* Đã hoàn tất, đã gửi email link cho anh Nam.
+2. **Tuấn Backend:**
+   - *Công việc:* Kiểm thử API ZaloPay và bàn giao API cho bạn Mạnh.
+   - *Thời hạn:* Chiều nay.
+3. **Mạnh Frontend:**
+   - *Công việc:* Ráp giao diện website theo API và Figma.
+   - *Thời hạn:* **Trước 17:00 ngày mai (thứ Năm)**.
+4. **Kế toán:**
+   - *Công việc:* Nhận thanh toán nghiệm thu đợt 1 (35.000.000đ) qua STK Techcombank.`;
+      } else if (prompt.includes('Tiền') || prompt.includes('SĐT') || prompt.includes('liên lạc')) {
+        responseMd = `### 📞 Thông Tin Liên Hệ & Số Liệu Trích Xuất
+- **Số điện thoại kỹ thuật đối tác:** \`0912345678\` (Hotline hỗ trợ kỹ thuật cổng ZaloPay).
+- **Số tiền nghiệm thu giai đoạn 1:** **35.000.000 VNĐ**.
+- **Ngân hàng giao dịch:** Techcombank.
+- **Thời hạn chót dự án:** Thứ Sáu, ngày 25/10.`;
+      } else {
+        responseMd = `### 🤖 Phân Tích Tin Nhắn Theo Yêu Cầu
+Dựa trên cuộc hội thoại của nhóm:
+- Tiến độ dự án đang diễn ra rất đúng kế hoạch và ăn khớp giữa các khâu Designer ➔ Backend ➔ Frontend.
+- Không có bất kỳ mâu thuẫn hay cản trở kỹ thuật nào chưa giải quyết được.
+- Đã có đầu mối hotline kỹ thuật dự phòng (0912345678) cho cổng ZaloPay.`;
+      }
+
+      resultBox.innerHTML = renderMarkdown(responseMd);
+      showToast('✨ Đã hiển thị kết quả phân tích mẫu!');
+    }
+
+    function renderMarkdown(md) {
+      let html = md
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+        .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+        .replace(/`([^`]+)`/g, '<code style="background:rgba(255,255,255,0.1); padding:2px 6px; border-radius:4px; font-family:monospace; color:#38bdf8;">$1</code>')
+        .replace(/^\s*[\-\*]\s+(.*$)/gim, '<li>$1</li>')
+        .replace(/^\s*\d+\.\s+(.*$)/gim, '<li>$1</li>')
+        .replace(/\n\n+/g, '<br><br>')
+        .replace(/\n/g, '<br>');
+      return html;
+    }
+  </script>
+</body>
+</html>
